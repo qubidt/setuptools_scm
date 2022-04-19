@@ -22,7 +22,7 @@ def main() -> None:
             f" Reason: {ex}.",
             file=sys.stderr,
         )
-        config = Configuration(root=opts.root or ".")
+        config = Configuration(root=opts.root)
 
     version = _get_version(config)
     assert version is not None

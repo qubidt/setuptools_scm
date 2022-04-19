@@ -34,6 +34,8 @@ def test_config_from_pyproject(tmpdir):
         textwrap.dedent(
             """
             [tool.setuptools_scm]
+            root = "../.."
+
             [project]
             description = "Factory ⸻ A code generator 🏭"
             authors = [{name = "Łukasz Langa"}]
@@ -41,7 +43,9 @@ def test_config_from_pyproject(tmpdir):
         ),
         encoding="utf-8",
     )
-    assert Configuration.from_file(str(fn))
+    config = Configuration.from_file(str(fn))
+    assert config
+    assert config.root == "../.."
 
 
 def test_config_regex_init():

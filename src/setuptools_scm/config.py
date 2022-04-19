@@ -74,7 +74,7 @@ class Configuration:
     def __init__(
         self,
         relative_to: "_t.PathT | None" = None,
-        root: _t.PathT = ".",
+        root: "_t.PathT | None" = None,
         version_scheme: str = DEFAULT_VERSION_SCHEME,
         local_scheme=DEFAULT_LOCAL_SCHEME,
         write_to: "_t.PathT | None" = None,
@@ -94,7 +94,7 @@ class Configuration:
         self._relative_to = relative_to
         self._root = "."
 
-        self.root = root
+        self.root = root or "."
         self.version_scheme = version_scheme
         self.local_scheme = local_scheme
         self.write_to = write_to
@@ -180,7 +180,7 @@ class Configuration:
     def from_file(
         cls,
         name: str = "./pyproject.toml",
-        root=None,
+        root=None,  # type: str | None
         dist_name=None,  # type: str | None
         _load_toml=_lazy_tomli_load,
         **kwargs,
@@ -201,6 +201,7 @@ class Configuration:
             raise LookupError(
                 f"{name} does not contain a tool.setuptools_scm section"
             ) from e
+
         if "dist_name" in section:
             if dist_name is None:
                 dist_name = section.pop("dist_name")
@@ -214,15 +215,18 @@ class Configuration:
         if dist_name is None:
             dist_name = _read_dist_name_from_setup_cfg()
 
-        if root is not None:
-            # Supercede config file root with parameter
-            section["root"] = root
-        else:
-            if "root" not in section:
-                # Set root to directory of pyproject.toml
-                section["root"] = os.path.relpath(os.path.dirname(name))
+        if "root" in section:
+            if root is None:
+                root = section.pop("root")
+                if not os.path.isabs(name):
+                    root = os.path.join(os.path.dirname(name), root)
+            else:
+                # Supersede config file root with parameter
+                del section["root"]
+        if root is None:
+            root = os.path.dirname(name)
 
-        return cls(dist_name=dist_name, **section, **kwargs)
+        return cls(dist_name=dist_name, root=root, **section, **kwargs)
 
 
 def _read_dist_name_from_setup_cfg():
